@@ -2,7 +2,7 @@
 
 This package deploys a dashboard-first Hermes Agent instance on Olares using:
 
-- `ghcr.io/progress44/rpi-system-hermes-agent-olares:1.0.0`
+- `ghcr.io/progress44/hermes-agent-olares:1.0.0`
 
 The app exposes:
 

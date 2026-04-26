@@ -38,7 +38,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/rpi-system-hermes-agent-olares
+  IMAGE_NAME: ${{ github.repository_owner }}/hermes-agent-olares
 
 jobs:
   docker:
