@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   package-chart:
@@ -47,7 +47,19 @@ jobs:
         run: helm package olares/hermesagent -d /tmp
 
       - name: Upload chart artifact
+        if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.chart.outputs.name }}-${{ steps.chart.outputs.version }}
           path: /tmp/${{ steps.chart.outputs.name }}-${{ steps.chart.outputs.version }}.tgz
+
+      - name: Publish chart release asset
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: chart-v${{ steps.chart.outputs.version }}
+          name: ${{ steps.chart.outputs.name }}-${{ steps.chart.outputs.version }}
+          files: /tmp/${{ steps.chart.outputs.name }}-${{ steps.chart.outputs.version }}.tgz
+          generate_release_notes: true
+          append_body: true
+          make_latest: false
