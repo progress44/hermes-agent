@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermesagent-config
+  namespace: {{ .Release.Namespace }}
+data:
+  HERMES_HOME: /opt/data
+  HOME: /opt/data/home
+  HERMES_ENABLE_GATEWAY: {{ ternary "1" "0" .Values.app.gatewayEnabled | quote }}
+  HERMES_ENABLE_API_SERVER: {{ ternary "1" "0" .Values.app.apiServerEnabled | quote }}
+  API_SERVER_ENABLED: {{ ternary "1" "0" .Values.app.apiServerEnabled | quote }}

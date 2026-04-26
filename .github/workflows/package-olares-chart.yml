@@ -1,0 +1,53 @@
+name: Package Olares Chart
+
+on:
+  pull_request:
+    paths:
+      - "olares/hermesagent/**"
+      - ".github/workflows/package-olares-chart.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "olares/hermesagent/**"
+      - ".github/workflows/package-olares-chart.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-chart:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Lint chart
+        run: helm lint olares/hermesagent
+
+      - name: Render chart
+        run: helm template hermesagent olares/hermesagent > /tmp/hermesagent-rendered.yaml
+
+      - name: Extract chart metadata
+        id: chart
+        run: |
+          VERSION=$(grep '^version:' olares/hermesagent/Chart.yaml | awk '{print $2}' | tr -d '"')
+          NAME=$(grep '^name:' olares/hermesagent/Chart.yaml | awk '{print $2}' | tr -d '"')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Package chart
+        run: helm package olares/hermesagent -d /tmp
+
+      - name: Upload chart artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.chart.outputs.name }}-${{ steps.chart.outputs.version }}
+          path: /tmp/${{ steps.chart.outputs.name }}-${{ steps.chart.outputs.version }}.tgz

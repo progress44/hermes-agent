@@ -1,0 +1,65 @@
+olaresManifest.version: "0.11.0"
+olaresManifest.type: app
+metadata:
+  name: hermesagent
+  description: Private Hermes Agent dashboard for Olares.
+  icon: https://app.cdn.olares.com/appstore/default/defaulticon.webp
+  appid: hermesagent
+  title: Hermes Agent
+  version: "1.0.0"
+  categories:
+    - AI
+    - Utilities
+    - Developer Tools
+permission:
+  appData: true
+  appCache: true
+  userData:
+    - Home
+spec:
+  versionName: "hermes-0.11.0-olares.1"
+  fullDescription: |
+    Hermes Agent provides a private dashboard-first AI workspace on Olares.
+
+    Included in this package
+    - Web dashboard on port `9119`
+    - Embedded browser chat powered by `hermes --tui`
+    - Persistent Hermes home directory under `userspace.appData/hermes-home`
+
+    Notes
+    - The web dashboard is the primary entrance for this package.
+    - Messaging gateway support is optional and disabled by default.
+    - The OpenAI-compatible API server is disabled by default.
+    - Provider API keys are expected to be configured after install through the dashboard.
+  developer: Nous Research
+  website: https://github.com/NousResearch/hermes-agent
+  sourceCode: https://github.com/progress44/rpi-system
+  submitter: progress44
+  doc: https://hermes-agent.nousresearch.com/docs/
+  license:
+    - text: MIT
+      url: https://github.com/NousResearch/hermes-agent/blob/main/LICENSE
+  locale:
+    - en-US
+  requiredMemory: 1Gi
+  limitedMemory: 4Gi
+  requiredDisk: 2Gi
+  limitedDisk: 10Gi
+  requiredCpu: 500m
+  limitedCpu: 2
+  supportArch:
+    - amd64
+options:
+  apiTimeout: 0
+  dependencies:
+    - name: olares
+      type: system
+      version: ">=1.12.2-0"
+entrances:
+  - name: hermesagent
+    port: 9119
+    host: hermesagent-svc
+    title: Hermes Agent
+    icon: https://app.cdn.olares.com/appstore/default/defaulticon.webp
+    authLevel: private
+    openMethod: window

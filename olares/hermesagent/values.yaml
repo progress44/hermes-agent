@@ -1,0 +1,26 @@
+image:
+  repository: ghcr.io/progress44/rpi-system-hermes-agent-olares
+  tag: "1.0.0"
+  pullPolicy: Always
+
+service:
+  port: 9119
+
+app:
+  gatewayEnabled: false
+  apiServerEnabled: false
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: "2"
+    memory: 4Gi
+
+# These are supplied by Olares at deploy time. The defaults keep local
+# helm lint/template runs deterministic.
+userspace:
+  appData: /var/olares/app-data
+
+sysVersion: "1.12.3"
