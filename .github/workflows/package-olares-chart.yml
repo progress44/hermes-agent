@@ -1,10 +1,6 @@
 name: Package Olares Chart
 
 on:
-  pull_request:
-    paths:
-      - "olares/hermesagent/**"
-      - ".github/workflows/package-olares-chart.yml"
   push:
     branches:
       - main
@@ -17,7 +13,7 @@ permissions:
   contents: write
 
 jobs:
-  package-chart:
+  release-chart:
     runs-on: ubuntu-latest
 
     steps:
@@ -36,30 +32,26 @@ jobs:
         run: helm template hermesagent olares/hermesagent > /tmp/hermesagent-rendered.yaml
 
       - name: Extract chart metadata
-        id: chart
+        id: chart_info
         run: |
-          VERSION=$(grep '^version:' olares/hermesagent/Chart.yaml | awk '{print $2}' | tr -d '"')
-          NAME=$(grep '^name:' olares/hermesagent/Chart.yaml | awk '{print $2}' | tr -d '"')
+          CHART_DIR="olares/hermesagent"
+          VERSION=$(grep '^version:' "$CHART_DIR/Chart.yaml" | awk '{print $2}' | tr -d '"')
+          NAME=$(grep '^name:' "$CHART_DIR/Chart.yaml" | awk '{print $2}' | tr -d '"')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "tag=chart-v$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Package chart
-        run: helm package olares/hermesagent -d /tmp
+        run: |
+          helm package olares/hermesagent -d .
 
-      - name: Upload chart artifact
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.chart.outputs.name }}-${{ steps.chart.outputs.version }}
-          path: /tmp/${{ steps.chart.outputs.name }}-${{ steps.chart.outputs.version }}.tgz
-
-      - name: Publish chart release asset
-        if: github.event_name != 'pull_request'
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: chart-v${{ steps.chart.outputs.version }}
-          name: ${{ steps.chart.outputs.name }}-${{ steps.chart.outputs.version }}
-          files: /tmp/${{ steps.chart.outputs.name }}-${{ steps.chart.outputs.version }}.tgz
+          tag_name: ${{ steps.chart_info.outputs.tag }}
+          name: ${{ steps.chart_info.outputs.name }}-${{ steps.chart_info.outputs.version }}
+          files: |
+            ${{ steps.chart_info.outputs.name }}-${{ steps.chart_info.outputs.version }}.tgz
           generate_release_notes: true
-          append_body: true
-          make_latest: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
