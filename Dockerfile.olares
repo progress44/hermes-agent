@@ -3,15 +3,15 @@ FROM debian:13.4
 
 ENV PYTHONUNBUFFERED=1
 ENV PLAYWRIGHT_BROWSERS_PATH=/opt/hermes/.playwright
-ENV HERMES_HOME=/opt/data
-ENV HOME=/opt/data/home
+ENV HERMES_HOME=/opt/hermes-home
+ENV HOME=/home/node
 ENV HERMES_WEB_DIST=/opt/hermes/hermes_cli/web_dist
 ENV HERMES_TUI_DIR=/opt/hermes/ui-tui
 ENV HERMES_PYTHON=/opt/hermes/.venv/bin/python
 ENV HERMES_ENABLE_GATEWAY=0
 ENV HERMES_ENABLE_API_SERVER=0
 ENV API_SERVER_ENABLED=0
-ENV PATH="/opt/hermes/.venv/bin:/opt/data/.local/bin:/usr/local/bin:/usr/bin:/bin"
+ENV PATH="/opt/hermes/.venv/bin:/home/node/.local/bin:/usr/local/bin:/usr/bin:/bin"
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -33,7 +33,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN /usr/sbin/addgroup --gid 1000 hermes && \
-    /usr/sbin/adduser --uid 1000 --gid 1000 --home /opt/data --disabled-password --gecos "" hermes
+    /usr/sbin/adduser --uid 1000 --gid 1000 --home /home/node --disabled-password --gecos "" hermes
 
 COPY --chmod=0755 --from=uv_source /usr/local/bin/uv /usr/local/bin/uvx /usr/local/bin/
 
@@ -54,6 +54,10 @@ RUN chmod 0755 docker/olares-entrypoint.sh && \
     cd ui-tui && npm install --prefer-offline --no-audit && npm run build && \
     cd /opt/hermes/web && npm run build && \
     cd /opt/hermes && uv venv && uv pip install --no-cache-dir -e ".[all]" && \
+    mkdir -p /home/node/.local/bin /home/node/.npm-global/bin /opt/hermes-home && \
+    printf '%s\n' 'export PATH="/opt/hermes/.venv/bin:/home/node/.local/bin:/usr/local/bin:/usr/bin:/bin:$PATH"' > /etc/profile.d/hermes-olares-path.sh && \
+    chmod 0644 /etc/profile.d/hermes-olares-path.sh && \
+    chown -R 1000:1000 /home/node /opt/hermes-home && \
     chmod -R a+rX /opt/hermes
 
 USER hermes

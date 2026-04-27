@@ -1,27 +1,40 @@
 # Hermes Agent for Olares
 
-This package deploys a dashboard-first Hermes Agent instance on Olares using:
+This package deploys a `clawdbot`-style Hermes Agent on Olares using:
 
 - `ghcr.io/progress44/hermes-agent-olares:1.1.0`
 
-The app exposes:
+The app exposes two entrances:
 
-- Hermes web dashboard at `http://hermesagent-svc:9119`
-- Embedded browser chat powered by `hermes --tui`
+- `Hermes CLI`
+- `Control UI`
+
+Internally the package uses:
+
+- a long-lived workspace container for terminal sessions
+- a dashboard sidecar for the Hermes web UI and embedded TUI chat
+- a best-effort gateway sidecar for messaging/runtime services
+- a terminal helper deployment
+- a proxy ingress deployment
 
 ## Runtime defaults
 
-- `HERMES_ENABLE_GATEWAY=0`
-- `HERMES_ENABLE_API_SERVER=0`
+- gateway sidecar retries in the background, but Hermes may still report
+  `gateway_state: stopped` until messaging platforms are configured
+- API server remains disabled by default
 
 The package does not require install-time provider secrets. Configure model
-provider keys after install from the dashboard or by editing `~/.hermes/.env`
-inside the mounted app-data directory.
+provider keys after install from the dashboard or by editing
+`/opt/hermes-home/.env` inside the mounted app-data volume.
 
 ## Persistence
 
-All Hermes runtime state is mounted at `/opt/data` and persisted under
-`userspace.appData/hermes-home`, including:
+Hermes runtime state is split into two persistent roots:
+
+- `userspace.appData/config` mounted at `/opt/hermes-home`
+- `userspace.appData/node` mounted at `/home/node`
+
+Key persisted files and directories include:
 
 - `.env`
 - `config.yaml`
@@ -31,19 +44,14 @@ All Hermes runtime state is mounted at `/opt/data` and persisted under
 - `memories/`
 - `plans/`
 
-## Optional gateway mode
+## Optional filesystem access
 
-To enable the background messaging gateway, set:
+At install time, Olares can expose additional host paths:
 
-- `app.gatewayEnabled=true`
+- `ALLOW_HOME_DIR_ACCESS=true`
+- `ALLOW_EXTERNAL_DIR_ACCESS=true`
 
-The gateway only remains active when at least one messaging platform is
-configured in `/opt/data/.env` or `/opt/data/config.yaml`.
-
-If you also want the OpenAI-compatible API server inside the gateway process,
-set:
-
-- `app.apiServerEnabled=true`
+These mounts are absent by default.
 
 ## Validation
 
@@ -56,5 +64,5 @@ helm package olares/hermesagent
 ## Operational note
 
 The container runs as UID/GID `1000`. If Olares creates the mounted host path
-as `root:root`, pre-create and `chown -R 1000:1000` the `hermes-home`
-directory on the node before the final install.
+as `root:root`, the chart includes a root init container to create and chown
+the Hermes data directories before the main containers start.
