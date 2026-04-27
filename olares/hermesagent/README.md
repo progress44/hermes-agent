@@ -19,6 +19,7 @@ Internally the package uses:
 
 ## Runtime defaults
 
+- Control UI remains available even when the gateway sidecar is not yet configured
 - gateway sidecar retries in the background, but Hermes may still report
   `gateway_state: stopped` until messaging platforms are configured
 - API server remains disabled by default

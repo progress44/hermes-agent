@@ -65,15 +65,6 @@ for subdir in cron hooks logs memories plans sessions skills skins workspace; do
     ensure_dir "$HERMES_HOME/$subdir" || true
 done
 
-copy_if_missing "$INSTALL_DIR/.env.example" "$HERMES_HOME/.env" || true
-copy_if_missing "$INSTALL_DIR/cli-config.yaml.example" "$HERMES_HOME/config.yaml" || true
-copy_if_missing "$INSTALL_DIR/docker/SOUL.md" "$HERMES_HOME/SOUL.md" || true
-
-if [ "$role" = "dashboard" ] && [ -d "$INSTALL_DIR/skills" ] && [ -w "$HERMES_HOME" ]; then
-    "$HERMES_PYTHON" "$INSTALL_DIR/tools/skills_sync.py" >/dev/null 2>&1 || \
-        warn "bundled skill sync failed; continuing with baked-in skills"
-fi
-
 run_workspace() {
     if [ "$#" -gt 0 ]; then
         exec "$@"

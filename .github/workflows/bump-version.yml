@@ -50,17 +50,20 @@ jobs:
           manifest_path = Path("olares/hermesagent/OlaresManifest.yaml")
           values_path = Path("olares/hermesagent/values.yaml")
           readme_path = Path("olares/hermesagent/README.md")
+          deployment_path = Path("olares/hermesagent/templates/deployment.yaml")
 
           chart = chart_path.read_text()
           manifest = manifest_path.read_text()
           values = values_path.read_text()
           readme = readme_path.read_text()
+          deployment = deployment_path.read_text()
 
           chart_version_match = re.search(r"^version:\s*\"?([0-9]+\.[0-9]+\.[0-9]+)\"?\s*$", chart, re.M)
           app_version_match = re.search(r"^appVersion:\s*\"?([0-9]+\.[0-9]+\.[0-9]+)\"?\s*$", chart, re.M)
           manifest_version_match = re.search(r"^(\s*)version:\s*\"?([0-9]+\.[0-9]+\.[0-9]+)\"?\s*$", manifest, re.M)
           image_tag_match = re.search(r'^\s*tag:\s*"([0-9]+\.[0-9]+\.[0-9]+)"\s*$', values, re.M)
           readme_image_match = re.search(r"ghcr\.io/progress44/hermes-agent-olares:([0-9]+\.[0-9]+\.[0-9]+)", readme)
+          deployment_image_matches = re.findall(r'ghcr\.io/progress44/hermes-agent-olares:([0-9]+\.[0-9]+\.[0-9]+)', deployment)
 
           if not chart_version_match:
               raise SystemExit("Could not find Chart.yaml version")
@@ -72,24 +75,31 @@ jobs:
               raise SystemExit("Could not find values.yaml image tag")
           if not readme_image_match:
               raise SystemExit("Could not find README image tag")
+          if len(deployment_image_matches) != 4:
+              raise SystemExit(f"Expected 4 deployment image tags, found {len(deployment_image_matches)}")
 
           old_chart_version = chart_version_match.group(1)
           old_app_version = app_version_match.group(1)
           old_manifest_version = manifest_version_match.group(2)
           old_image_tag = image_tag_match.group(1)
           old_readme_tag = readme_image_match.group(1)
+          unique_deployment_tags = set(deployment_image_matches)
+          if len(unique_deployment_tags) != 1:
+              raise SystemExit(f"Deployment image tag mismatch: {sorted(unique_deployment_tags)}")
+          old_deployment_tag = deployment_image_matches[0]
 
           if not (
               old_chart_version
               == old_app_version
               == old_manifest_version
               == old_image_tag
+              == old_deployment_tag
               == old_readme_tag
           ):
               raise SystemExit(
                   "Version mismatch: "
                   f"chart={old_chart_version}, chart appVersion={old_app_version}, "
-                  f"manifest={old_manifest_version}, image_tag={old_image_tag}, "
+                  f"manifest={old_manifest_version}, image_tag={old_image_tag}, deployment={old_deployment_tag}, "
                   f"readme={old_readme_tag}"
               )
 
@@ -141,11 +151,16 @@ jobs:
               f"ghcr.io/progress44/hermes-agent-olares:{new_version}",
               1,
           )
+          deployment = deployment.replace(
+              f'ghcr.io/progress44/hermes-agent-olares:{old_deployment_tag}',
+              f'ghcr.io/progress44/hermes-agent-olares:{new_version}',
+          )
 
           chart_path.write_text(chart)
           manifest_path.write_text(manifest)
           values_path.write_text(values)
           readme_path.write_text(readme)
+          deployment_path.write_text(deployment)
 
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
               f.write(f"old_version={old_chart_version}\n")
@@ -158,6 +173,6 @@ jobs:
             echo "No changes to commit"
             exit 0
           fi
-          git add olares/hermesagent/Chart.yaml olares/hermesagent/OlaresManifest.yaml olares/hermesagent/values.yaml olares/hermesagent/README.md
+          git add olares/hermesagent/Chart.yaml olares/hermesagent/OlaresManifest.yaml olares/hermesagent/values.yaml olares/hermesagent/README.md olares/hermesagent/templates/deployment.yaml
           git commit -m "bump version to ${{ steps.bump.outputs.new_version }}"
           git push
