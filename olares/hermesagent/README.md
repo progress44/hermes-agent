@@ -2,7 +2,7 @@
 
 This package deploys a `clawdbot`-style Hermes Agent on Olares using:
 
-- `ghcr.io/progress44/hermes-agent-olares:1.1.0`
+- `ghcr.io/progress44/hermes-agent-olares:1.2.0`
 
 The app exposes two entrances:
 
