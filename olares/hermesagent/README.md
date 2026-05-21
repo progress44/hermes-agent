@@ -2,12 +2,12 @@
 
 This package deploys a `clawdbot`-style Hermes Agent on Olares using:
 
-- `ghcr.io/progress44/hermes-agent-olares:1.2.0`
+- `beclab/nousresearch-hermes-agent:v2026.5.7`
 
 The app exposes two entrances:
 
 - `Hermes CLI`
-- `Control UI`
+- `Dashboard`
 
 Internally the package uses:
 
@@ -15,25 +15,26 @@ Internally the package uses:
 - a dashboard sidecar for the Hermes web UI and embedded TUI chat
 - a best-effort gateway sidecar for messaging/runtime services
 - a terminal helper deployment
-- a proxy ingress deployment
 
 ## Runtime defaults
 
 - Control UI remains available even when the gateway sidecar is not yet configured
 - gateway sidecar retries in the background, but Hermes may still report
   `gateway_state: stopped` until messaging platforms are configured
+- `hermes gateway restart` does not restart the containerized gateway directly.
+  Use `touch /opt/data/.gateway-restart-requested` from inside the workspace to
+  request a gateway restart.
 - API server remains disabled by default
 
 The package does not require install-time provider secrets. Configure model
 provider keys after install from the dashboard or by editing
-`/opt/hermes-home/.env` inside the mounted app-data volume.
+`/opt/data/.env` inside the mounted app-data volume.
 
 ## Persistence
 
-Hermes runtime state is split into two persistent roots:
+Hermes runtime state is persisted under:
 
-- `userspace.appData/config` mounted at `/opt/hermes-home`
-- `userspace.appData/node` mounted at `/home/node`
+- `userspace.appData` mounted at `/opt/data`
 
 Key persisted files and directories include:
 
@@ -64,6 +65,5 @@ helm package olares/hermesagent
 
 ## Operational note
 
-The container runs as UID/GID `1000`. If Olares creates the mounted host path
-as `root:root`, the chart includes a root init container to create and chown
-the Hermes data directories before the main containers start.
+The chart includes a root init container to prepare and chown the persisted
+Hermes data directory before the main containers start.
